@@ -19,7 +19,7 @@ For example:
 
     `$ ./fromDirectToUndirect cit-Patents.txt`
 
-The format `cit-Patents.txt` should be edge list.
+The format of `cit-Patents.txt` should be edge list.
 
 2. **preprocess** will do the orientation and reordering and generate the CSR format of graph. It will take `1.mmio` as input and generate two file `begin.bin` and `adjacent.bin`
 
@@ -32,9 +32,12 @@ Run it by
     $ cd Dataset/Cit-Patents/
     $ ./get&preprocess.sh
 
+For the large graph and input file only include edge list, we recommend use preprocess code in `Preprocess/speedupIO`.
+
 For partition, run 
 
-    $./partition.sh
+    $./partition.sh 2
+There are one input arguments `n`, it represent the partition number, we will partition graph into `n*n` pieces
 
 ## Compile and Run code
 For small graph, we don't partition the graph. 
@@ -45,7 +48,7 @@ Compile the code:
 
 Run the code:
 
-    $ mpirun -n 1 ./trianglecounting.bin ../Dataset/Cit-Patents/ 1 1024 1024 1
+    $ mpirun -n 1 ./trianglecounting.bin ../Dataset/Cit-Patents/ 1 1024 1024 1 2
 
 The input arguments is 
 1. input graph folder 
@@ -60,3 +63,28 @@ The output arguments is
 4. triangle counts
 5. times
 6. TEPS rate
+
+For the large graph, partition is required.
+
+Compile the code:
+
+    $ cd With-graph-partition/
+    $ make
+
+Run the code:
+
+    $ mpirun -n 8 ./trianglecounting.bin ../Dataset/Cit-Patents/ 8 1024 1024 1 2
+
+
+The input arguments is 
+1. input graph folder 
+2. number of GPUs should be m
+3. number of thread per block 
+4. number of block 
+5. chuncksize
+6. partition number `n`
+The output arguments is
+1. graph folder 
+4. triangle counts
+5. min times
+6. max times

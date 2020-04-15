@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
    MPI_Reduce(&now_min_time, &global_min_time, 1, MPI_DOUBLE,MPI_MIN, 0, MPI_COMM_WORLD);
    if(myrank%numtasks==0)
    {
-      printf("\n%s,triangle:%lld,%f,%f,%f \n",argv[1],global_sum,global_min_time,global_max_time,(args.edge_count/global_max_time/1000000000));
+      printf("\n%s,triangle:%lld,%f,%f\n",argv[1],global_sum,global_min_time,global_max_time);
    }
    MPI_Finalize();
    return 0;
