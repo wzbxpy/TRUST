@@ -204,7 +204,7 @@ void computeCSR(int k)
 
     ofstream beginFile("begin.bin", ios::out|ios::binary);
     ofstream adjFile("adjacent.bin", ios::out|ios::binary);
-    ofstream edgeFile("edge", ios::out|ios::binary);
+    // ofstream edgeFile("edge", ios::out|ios::binary);
     long long sum=0;
     for (int i = 0; i < vertex_count; i++)
     {
@@ -214,7 +214,7 @@ void computeCSR(int k)
         vector<int>::iterator upp=upper_bound(vertex[i].edge.begin(),vertex[i].edge.end(),k);
         int divide=upp-vertex[i].edge.begin();
         // cout<<divide<<' '<<vertex[i].edge.size()<<endl;
-        edgeFile.write((char*)&divide,sizeof(int));
+        // edgeFile.write((char*)&divide,sizeof(int));
         adjFile.write((char*)&vertex[i].edge[0],sizeof(int)*vertex[i].edge.size());
     }
     

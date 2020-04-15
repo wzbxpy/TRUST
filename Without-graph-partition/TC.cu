@@ -576,7 +576,7 @@ dynamic_assign(vertex_t* adj_list, index_t* beg_pos, int edge_count, int vertex_
 }
 
 
-struct arguments Triangle_count(int rank, char name[100], struct arguments args, int total_process,int n_threads , int n_blocks, int chunk_size)
+struct arguments Triangle_count(int rank, char name[100], struct arguments args, int total_process,int n_threads, int n_blocks, int chunk_size)
 {
 
 	//fprintf(stderr,"---------------Here----------------");
