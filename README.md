@@ -4,6 +4,9 @@ This is the code for TRUST: Triangle Counting Reloaded on GPUs.
 The code of TRUST has two version: without graph partition for small graph and without graph partition for large graph. Preprocess include the code for preprocessing. Following the step to test the TRUST.
 
 ## Environment 
+CUDA Toolkit 10.2
+g++ 7.4.0
+MPICH-3.3
 
 ## Prerpocess
 In Preprocessing step, use 
