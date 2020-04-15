@@ -74,28 +74,35 @@ void IP(int rank, int cpu_id)
 
 int main(int argc, char *argv[])
 {
-    int myrank,numtasks;
-    int total_rank=atoi(argv[2]);
-    int N_THREADS= atoi(argv[3]);    
-    int N_BLOCKS=atoi(argv[4]);
-    int chunk_size=atoi(argv[5]);
-     MPI_Status status;
-    struct arguments args;
-    /* Initialize the MPI library */
-    MPI_Init(&argc, &argv);
-    /* Determine unique id of the calling process of all processes participating
-         in this MPI program. This id is usually called MPI rank. */
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank); 
-    MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
-	//int N_GPUS=argv[1];
-    // call the function
+   int myrank,numtasks;
+   int total_rank=atoi(argv[2]);
+   int N_THREADS= atoi(argv[3]);    
+   int N_BLOCKS=atoi(argv[4]);
+   int chunk_size=atoi(argv[5]);
+   int partition_num=atoi(argv[6]);
+//   	assert(1>3);
+
+   //fprintf(stderr," %s \n", argv[1]);
+   //[For p2p08]:
+   //int stat[16]= {1313,2451,3704,4682,6005,7118,8562,9878,11177,12506,13800,15148,16410,17716,19200,20777};
+   // For Facebook combined:
+   //int stat[16]={6660,12003,17400,23208,29515,34223,38163,41771,45113,48885,52745,56454,59673,65882,74390,88234};
+   MPI_Status status;
+   struct arguments args;
+   /* Initialize the MPI library */
+   MPI_Init(&argc, &argv);
+   /* Determine unique id of the calling process of all processes participating
+      in this MPI program. This id is usually called MPI rank. */
+   MPI_Comm_rank(MPI_COMM_WORLD, &myrank); 
+   MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+
    long long global_sum,now_sum=0;
    double global_min_time,global_max_time,now_min_time=9999,now_max_time=0;
-   // myrank=49;
+   // myrank=705;
    while (myrank<total_rank)
    {
       // cout<<myrank<<"start"<<endl;
-      args=Triangle_count(myrank,argv[1],args, total_rank,N_THREADS, N_BLOCKS,chunk_size);
+      args=Triangle_count(myrank,argv[1],args, total_rank,N_THREADS, N_BLOCKS, chunk_size, partition_num);
       // cout<<myrank<<"end"<<endl;
       myrank+=numtasks;
       if (now_min_time>args.time) now_min_time=args.time;
@@ -107,12 +114,13 @@ int main(int argc, char *argv[])
    //IP(myrank, cpu_id);
    //printf("%s,GPU: %d,%d, %d, %f\n",argv[1],myrank,args.edge_count,args.degree,args.time);
    //MPI_Barrier(MPI_COMM_WORLD);
+   // cout<<args.time<<endl;
    MPI_Reduce(&now_sum, &global_sum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
    MPI_Reduce(&now_max_time, &global_max_time, 1, MPI_DOUBLE,MPI_MAX, 0, MPI_COMM_WORLD);
    MPI_Reduce(&now_min_time, &global_min_time, 1, MPI_DOUBLE,MPI_MIN, 0, MPI_COMM_WORLD);
    if(myrank%numtasks==0)
    {
-      printf("%s,%d,%d,%lld,%f,%f \n",argv[1],args.vertices,args.edge_count,global_sum,global_max_time,(args.edge_count/global_max_time/1000000000));
+      printf("\n%s,triangle:%lld,%f,%f,%f \n",argv[1],global_sum,global_min_time,global_max_time,(args.edge_count/global_max_time/1000000000));
    }
    MPI_Finalize();
    return 0;

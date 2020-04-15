@@ -45,6 +45,14 @@ public:
 	
 	index_t		*count;	
 	int 		*valid;
+//dynaic scheduling
+	index_t		ChunkNum;	// = roof(upperEdgeCount/BufferSize), the number of chunks for workload edge list
+
+	index_t		*ds_count;	//ds_count[P][i] is the count of partition P chunk i	
+	index_t		*ds_complete;	//ds_progress[D]: the ID of first chunk need worker
+	index_t		*ds_status;	// how many work remain for [P][C]
+	index_t		*ds_help;	//ds_last[P]; initiate with the last chunk it has to work with
+	index_t		*ds_last;	//ds_last[P]; initiate with the last chunk it has to work with
 
 	//gpu data
 	GPU_data *gdata;
@@ -54,9 +62,20 @@ public:
 	graph() {};
 	graph(	std::string filename);//,
 	~graph();
+	void preproc();
+	void reduceResult();
+
+	void initDevice(int GPU_id,int Part_id);
+	void DeviceCompute(int GPU_id,index_t Chunk_id);
+	void gpuReduce(int GPU_id);
+	void gpuProc(int GPU_id);
+
+	void cpuProc();
+	void cpuCompute(int Part_id, index_t Chunk_id);
 
 };
 
 //#include "graph.c"
+#include "graph.hpp"
 //#include "kernel.cu"
 #endif

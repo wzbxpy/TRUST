@@ -3,7 +3,8 @@ N=1
 cucc= "$(shell which nvcc)"
 cc= "$(shell which mpicxx)"
 commflags=-lcudart -L"$(shell dirname $(cucc))"/../lib64  -O3 -W -Wall -Wno-unused-function -Wno-unused-parameter
-cuflags= --compiler-options -Wall --gpu-architecture=compute_70 --gpu-code=sm_70 -m64 -c -O3   # --resource-usage 
+cuflags= --compiler-options -Wall --gpu-architecture=compute_70 --gpu-code=sm_70  -O3   # --resource-usage 
+# cuflags= --compiler-options -v -Xcudafe  -\# --resource-usage 
 
 .SILENT: cucc
 .SILENT: cc

@@ -31,6 +31,20 @@ inline off_t fsize(const char *filename) {
 	return -1;
 }
 
+
+static void HandleError( cudaError_t err,
+                         const char *file,
+                         int line ) {
+    if (err != cudaSuccess) {
+        printf( "%s in %s at line %d\n", \
+        cudaGetErrorString( err ),
+                file, line );
+        exit( EXIT_FAILURE );
+    }
+}
+#define H_ERR( err ) \
+  (HandleError( err, __FILE__, __LINE__ ))
+
 typedef struct EDGE{
 	vertex_t A;
 	vertex_t B;
