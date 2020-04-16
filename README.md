@@ -40,6 +40,7 @@ For the large graph and input file only include edge list, we recommend use prep
 For partition, run 
 
     $./partition.sh 2
+    
 There are one input arguments `n`, it represent the partition number, we will partition graph into `n*n` pieces
 
 ## Compile and Run code
@@ -51,7 +52,7 @@ Compile the code:
 
 Run the code:
 
-    $ mpirun -n 1 ./trianglecounting.bin ../Dataset/Cit-Patents/ 1 1024 1024 1 2
+    $ mpirun -n 1 ./trianglecounting.bin ../Dataset/Cit-Patents/ 1 1024 1024 1
 
 The input arguments is 
 1. input graph folder 
