@@ -59,6 +59,7 @@ The input arguments is
 3. number of thread per block 
 4. number of block 
 5. chuncksize
+
 The output arguments is
 1. graph folder 
 2. vertex count
@@ -86,6 +87,7 @@ The input arguments is
 4. number of block 
 5. chuncksize
 6. partition number `n`
+
 The output arguments is
 1. graph folder 
 4. triangle counts
