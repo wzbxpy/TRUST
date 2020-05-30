@@ -22,6 +22,10 @@ typedef struct edge_list
     vector<int> edge;
     int newid;
 };
+typedef struct sortarr
+{
+    int value,id;
+};
 vector<edge_list> vertex;
 vector<edge_list> vertexb;
 vector<edge> edgelist;
@@ -37,97 +41,62 @@ bool cmp2(edge_list a, edge_list b)
 {
     return a.edge.size()>b.edge.size() ;
 }
+bool cmp_fast1(sortarr a, sortarr b)
+{
+    return a.value<b.value ;
+}
+bool cmp_fast2(sortarr a, sortarr b)
+{
+    return a.value>b.value ;
+}
+
 void puttime(string s)
 {
     times=clock()-times;
-    cout<<s<<times/CLOCKS_PER_SEC<<"s"<<endl;
+    cout<<s<<':'<<times/CLOCKS_PER_SEC<<"s"<<endl;
     times=clock();
 }
 
-void loadgraph()
-{
-    ifstream inFile("1.mmio", ios::in);
-    if(!inFile) {
-        cout << "error" <<endl;
-        // return 0;
-    }
-    int x;
-    int p=0;
-    string line;
-    stringstream ss;
-    while(getline( inFile, line ))
-	{
-		if(line[0] < '0' || line[0] > '9')
-			continue;
-        ss.str("");
-        ss.clear();
-        ss << line;
-        if (p==0)
-        {
-            ss>>vertex_count>>x>>edge_count;
-            p=1;
-            vertex.resize(vertex_count);
-            for (int i=0;i<vertex_count;i++)
-            {
-                vertex[i].vertexID=i;
-            }
-            continue;
-        }
-        int u,v;
-        ss>>u>>v>>x;
-        u--;
-        v--;
-        vertex[u].edge.push_back(v);
-        vertex[v].edge.push_back(u);
-    }
-}
-
-void newloadgraph(string filename)
-{
-    FILE *fp=fopen(filename.c_str(),"r");
-    edge e;
-    while(fscanf(fp,"%d%d",&e.u,&e.v)!=EOF)
-	{
-        edgelist.push_back(e);
-        maxvertex=max(maxvertex,max(e.u,e.v));
-    }
-    fclose(fp);
-}
 
 void selectVertex()
 {
-    int *a=new int[maxvertex+10];
-    int *b=new int[maxvertex+10];
-    for (int i=0;i<=maxvertex;i++)
-    {
-        a[i]=0;
-    }
-    for (int i=0;i<edgelist.size();i++)
-    {
-        a[edgelist[i].u]=1;
-        a[edgelist[i].v]=1;
-    }
-    int k=0;
-    for (int i=0;i<=maxvertex;i++)
-    {
-        if (a[i]) 
-        {
-            a[i]=k;
-            k++;
-        }
-    }
-    puttime("check time");
+    long long k,m;
+    
+    ifstream graph_prop("prop.txt", ios::in);
+    graph_prop>>m>>k;
+    m*=2;
+    int *degree=new int[k+1];
     vertex_count=k;
     vertex.resize(k);
-    for (int i=0;i<edgelist.size();i++)
+    ifstream F_degree("degree", ios::in|ios::binary);
+    F_degree.read((char*)&degree[0],sizeof(int)*k);
+    for (int i=0;i<k;i++)
     {
-        int u=a[edgelist[i].u];
-        int v=a[edgelist[i].v];
-        vertex[u].edge.push_back(v);
-        vertex[v].edge.push_back(u);
+        vertex[i].edge.reserve(degree[i]+1);
     }
-    free(a);
-    free(b);
+
+    ifstream F_EL("BinEdgelist", ios::in|ios::binary);
+    // FILE *F_EL= fopen("BinEdgelist","rb");
+    int *readedge=new int[10002];
+    while (m>0)
+    {
+        int p=10000;
+        if (m<p) p=m;
+        m=m-p;
+        F_EL.read((char*)&readedge[0],sizeof(int)*p);
+        // fread(readedge,sizeof(int),p,F_EL);
+
+        for (int i=0;i<p;i+=2)
+        {
+            int u=readedge[i];
+            int v=readedge[i+1];
+            vertex[u].edge.push_back(v);
+            vertex[v].edge.push_back(u);
+        }
+    }
+    F_EL.read((char*)&readedge[0],sizeof(int)*2);
+    // cout<<readedge[0]<<' '<<readedge[1]<<endl;
+    free(readedge);
 }
 void deleteedge()
 {
@@ -136,6 +105,7 @@ void deleteedge()
     {
         vector <int> x;
         x.swap(vertex[i].edge);
+        vertex[i].edge.reserve(x.size());
         sort(x.begin(),x.end(),cmp);
         int p=0,v=-1;
         while (!x.empty())
@@ -151,8 +121,8 @@ void deleteedge()
         }
         vertex[i].vertexID=i;
         edge_count+=vertex[i].edge.size();
+        vector<int>().swap(x);
     }
-    vector<edge>().swap(edgelist);
 }
 void orientation()
 {
@@ -165,6 +135,7 @@ void orientation()
     for (int i = 0; i < vertex_count; i++)
     {
         vector<int> x(vertex[i].edge);
+        vertex[i].edge.reserve(x.size());
         vertex[i].edge.clear();
         while (!x.empty())
         {
@@ -172,6 +143,7 @@ void orientation()
             x.pop_back();
             if (a[v]>i) vertex[i].edge.push_back(v);
         }
+        vector<int>().swap(x);
     }
     free(a);
 }
@@ -188,7 +160,7 @@ void reassignID()
         if (k3==-1 && vertex[i].edge.size()<2)
             k3=i;
     }
-    cout<<k2<<' '<<k3<<endl;
+    // cout<<k2<<' '<<k3<<endl;
     int s1=k1,s2=k2,s3=k3;
     for (int i = 0; i < vertex_count; i++)
     {
@@ -244,7 +216,7 @@ void reassignID()
     for (int i = 0; i < vertex_count; i++)
     {
         int u=vertexb[i].newid;
-        
+        vertex[u].edge.reserve(vertexb[i].edge.size()+1);
         for (int j = 0; j < vertexb[i].edge.size(); j++)
         {
             int v=vertexb[i].edge[j];
@@ -254,7 +226,8 @@ void reassignID()
         }
         vector<int>().swap(vertexb[i].edge);
     }
-    
+    vector<edge_list>().swap(vertexb);
+
     // for (int i = 0; i < 10; i++)
     // {
     //     for (int j = 0; j < vertexb[i].edge.size(); j++)
@@ -266,7 +239,6 @@ void reassignID()
 
 void computeCSR()
 {
-    long long time=clock();
     int *a =new int[vertex_count];
     for (int i = 0; i < vertex_count; i++)
     {
@@ -280,10 +252,10 @@ void computeCSR()
         }
         vertex[i].vertexID=i;
     }
-    
+    puttime("newID time");
+
     reassignID();
-    time=clock()-time;
-    cout<<"reassign time"<<time/CLOCKS_PER_SEC<<"s"<<endl;
+    puttime("reordering time");
     // time=clock();
     ofstream beginFile("begin.bin", ios::out|ios::binary);
     ofstream adjFile("adjacent.bin", ios::out|ios::binary);
@@ -318,40 +290,44 @@ void computeCSR()
     free(a);
 }
 
+void fasterSort(bool (*cmpss)(sortarr a, sortarr b))
+{
+    sortarr *tst=new sortarr[vertex_count];
+    for (int i=0;i<vertex_count;i++)
+    {
+        tst[i].value=vertex[i].edge.size();
+        tst[i].id=i;
+    }
+    sort(tst,tst+vertex_count,cmpss);
+    vertexb.swap(vertex);
+    vertex.resize(vertex_count);
+    for (int i=0;i<vertex_count;i++)
+    {
+        int v=tst[i].id;
+        vertex[i].edge.swap(vertexb[v].edge);
+        vertex[i].vertexID=vertexb[v].vertexID;
+        vertex[i].newid=vertexb[v].newid;
+    }
+    vector<edge_list>().swap(vertexb);
+    free(tst);
+}
 int main(int argc, char* argv[])
 {
     times=clock();
-    string Infilename="test.txt";
-    string Outfilename="1.mmio";
-    if (argc>1)
-    {
-        Infilename=argv[1];
-    }
-    if (argc>2)
-    {
-        Outfilename=argv[2];
-    }
-    newloadgraph(Infilename);
 
-    puttime("loadgraph");
+
     selectVertex();
     puttime("select time");
     deleteedge();
 
-    // cout<<vertex_count<<" ???"<<endl;
-    // for (int i = 0; i < vertex_count; i++)
-    // {
-    //     cout<<vertex[i].edge.size()<<endl;
-    // }
     puttime("delete time");
-    int *tst=new int[vertex_count];
-    for (int i=0;i<vertex_count;i++)
-        tst[i]=vertex[i].edge.size();
-    sort(tst,tst+vertex_count);
-    puttime("withoutvector");
-
-    sort(vertex.begin(),vertex.end(),cmp1);
-    
+    // int *tst=new int[vertex_count];
+    // for (int i=0;i<vertex_count;i++)
+    //     tst[i]=vertex[i].edge.size();
+    // sort(tst,tst+vertex_count);
+    // puttime("withoutvector");
+    // sort(vertex.begin(),vertex.end(),cmp1);
+    fasterSort(cmp_fast1);
     puttime("sort time");
     //print
     // for (int i = 0; i < vertex_count; i++)
@@ -360,15 +336,14 @@ int main(int argc, char* argv[])
     // }
    
     orientation();
-    
-        //print
-    
+        
     puttime("orientation time");
-    sort(vertex.begin(),vertex.end(),cmp2);
+    // sort(vertex.begin(),vertex.end(),cmp2);
+    fasterSort(cmp_fast2);
 
     
     puttime("sort time");
-    cout<<vertex[0].edge.size()<<endl;
+    // cout<<vertex[0].edge.size()<<endl;
 
     // cout<<vertex[k].edge.size()<<endl;
     // cout<<vertex[k-1].edge.size()<<endl;
@@ -382,6 +357,5 @@ int main(int argc, char* argv[])
     
     puttime("store time");
 
-    system("pause");
     return 0;
 } 

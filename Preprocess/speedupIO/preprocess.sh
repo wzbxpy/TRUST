@@ -1,6 +1,6 @@
 cd $1
 g++ TransformTxt2Binary.cpp -O3 -o TransformTxt2Binary
-g++ preprocess_deleteconflictinneighbor.cpp -O3 -o preprocess
+g++ preprocess_out.cpp -O3 -o preprocess
 g++ partition.cpp -O3 -o partition
 
 filename=$2
