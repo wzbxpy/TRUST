@@ -596,7 +596,7 @@ struct arguments Triangle_count(int rank, char name[100], struct arguments args,
 	// HRR(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 	// HRR(cudaFuncSetAttribute(dynamic_assign,cudaFuncAttributePreferredSharedMemoryCarveout,16));
 	//cudaSetDevice();
-	HRR(cudaSetDevice(rank%deviceCount));
+	HRR(cudaSetDevice((rank+1)%deviceCount));
 	//cudaDeviceProp devProp;
 	//HRR(cudaGetDeviceProperties(&devProp, rank));
 	index_t vertex_count=	graph_d-> vert_count;
@@ -661,12 +661,13 @@ struct arguments Triangle_count(int rank, char name[100], struct arguments args,
 
 	if (1)
 	{
-		double time_start=wtime();
+		double time_start=clock();
 		// HRR(cudaMalloc((void **) &BIN_MEM,sizeof(int)*total));
 		dynamic_assign<<<n_blocks,n_threads>>>(d_adj_list, d_beg_pos, edge_count, vertex_count, BIN_MEM,GLOBAL_COUNT,rank,total_process, BUCKET_SIZE, T_Group, G_INDEX, chunk_size,warpfirstvertex,g_gettime,g_maxcollision);
 		HRR(cudaDeviceSynchronize());	
 		// HRR(cudaFree(BIN_MEM));
-    	cmp_time = wtime()-time_start;
+		cmp_time = clock()-time_start;
+		cmp_time = cmp_time/CLOCKS_PER_SEC;
 	}
 	HRR(cudaFree(BIN_MEM));
 
