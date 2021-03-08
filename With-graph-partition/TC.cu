@@ -74,33 +74,41 @@ void kogge_sum(int *A,int *B, int len, int WARP_TID,index_t *beg_pos)
 __device__
 int linear_search(int neighbor,int *shared_partition,int *partition, int *bin_count, int bin, int BIN_START)
 {
-	int len = bin_count[bin];
-	int i = bin;
-	int step=0;
-	while(step<len && step<shared_BUCKET_SIZE)
+	
+	for(;;)
 	{
-		if(shared_partition[i]==neighbor)
+		int i = bin;
+		int len = bin_count[i];
+		int step=0;
+		int nowlen;
+		if (len<shared_BUCKET_SIZE) nowlen=len; else nowlen=shared_BUCKET_SIZE;
+		while(step<nowlen)
 		{
-			return 1;
+			if(shared_partition[i]==neighbor)
+			{
+				return 1;
+			}
+			i+=blockDim.x;
+			step+=1;
 		}
-		i+=blockDim.x;
-		step+=1;
-	}
-	len-=shared_BUCKET_SIZE;
-	i = bin+BIN_START;
-	step=0;
-	while(step<len)
-	{
-		if(partition[i]==neighbor)
-		{
-			return 1;
+		
+		len-=shared_BUCKET_SIZE;
+		i = bin+BIN_START;
+		step=0;
+		while(step<len)
+		{	
+			if(partition[i]==neighbor)
+			{
+				return 1;
+			}
+			i+=blockDim.x;
+			step+=1;
 		}
-		i+=blockDim.x;
-		step+=1;
+		if (len+shared_BUCKET_SIZE<99) break;
+		bin++; 
 	}
 	return 0;
 }
-
 __device__
 int merge(int *A, int *B, int ai, int bi, int l1_e, int l2_e,int steps)
 {
@@ -620,7 +628,7 @@ int max_count(int *bin_count,int start,int end,int len)
 // }
 
 __global__ void
-dynamic_assign(vertex_t* adj_list_HT, index_t* beg_pos_HT, vertex_t* adj_list_intersection, index_t* beg_pos_intersection, vertex_t* adj_list_neighbor, index_t* beg_pos_neighbor, int edge_count, int vertex_count,int edge_list_count, int *partition,unsigned long long *GLOBAL_COUNT, int rank, int total_process,  int G_BUCKET_SIZE, int T_Group, int *G_INDEX, int CHUNK_SIZE,int warpfirstvertex,int nothreadfirstvertex, int* vertexmap, unsigned long long* gettime,unsigned long long* maxcollision)
+dynamic_assign(vertex_t* adj_list_HT, index_t* beg_pos_HT, vertex_t* adj_list_intersection, index_t* beg_pos_intersection, vertex_t* adj_list_neighbor, index_t* beg_pos_neighbor, int edge_count, int vertex_count,int edge_list_count, int *partition,unsigned long long *GLOBAL_COUNT, int rank, int total_process,  int BUCKET_SIZE, int T_Group, int *G_INDEX, int CHUNK_SIZE,int warpfirstvertex,int nothreadfirstvertex, int* vertexmap, unsigned long long* gettime,unsigned long long* maxcollision)
 {
 	
 	// printf("thread%d",threadIdx.x);
@@ -651,7 +659,7 @@ dynamic_assign(vertex_t* adj_list_HT, index_t* beg_pos_HT, vertex_t* adj_list_in
 	while (vertex<warpfirstvertex)
 	{
 		int vertexID=vertexmap[vertex];
-		int BINsize = blockDim.x*G_BUCKET_SIZE;
+		int BINsize = blockDim.x*BUCKET_SIZE;
 		int BIN_START = blockIdx.x*BINsize;
 		// if (degree<=USE_CTA) break;
 		int start=beg_pos_HT[vertexID];
@@ -672,16 +680,25 @@ dynamic_assign(vertex_t* adj_list_HT, index_t* beg_pos_HT, vertex_t* adj_list_in
 		{
 			int temp= adj_list_HT[now];
 			int bin=temp & MODULO;
-			int index=atomicAdd(&bin_count[bin],1);
-			if (index<shared_BUCKET_SIZE)
+			int index;
+			for(;;)
 			{
-				shared_partition[index*blockDim.x+ bin]=temp;
+				index=atomicAdd(&bin_count[bin],1);
+				if (index<shared_BUCKET_SIZE)
+				{
+					shared_partition[index*blockDim.x+ bin]=temp;
+					break;
+				}
+				else if (index<BUCKET_SIZE)
+				{
+					index=index-shared_BUCKET_SIZE;
+					partition[index*blockDim.x+ bin + BIN_START]=temp;
+					break;
+				}
+				break;
+				index=atomicAdd(&bin_count[bin],-1);
+				bin=(bin+1)%blockDim.x;
 			}
-			else
-			{
-				index=index-shared_BUCKET_SIZE;
-				partition[index*blockDim.x+ bin + BIN_START]=temp;
-			}			
 			now+=blockDim.x;
 		}
 		__syncthreads();
@@ -785,7 +802,7 @@ dynamic_assign(vertex_t* adj_list_HT, index_t* beg_pos_HT, vertex_t* adj_list_in
 		// if (vertex==warpfirstvertex+32768*2-1 && WARP_TID==0)
 		// 	printf("%d %d ok\n",vertex,vertexID);
 		// unsigned long long start_time=clock64();
-		int BINsize = blockDim.x*G_BUCKET_SIZE;
+		int BINsize = blockDim.x*BUCKET_SIZE;
 		int BIN_START = blockIdx.x*BINsize;
 		int start=beg_pos_HT[vertexID];
 		int end=beg_pos_HT[vertexID+1];
@@ -807,20 +824,27 @@ dynamic_assign(vertex_t* adj_list_HT, index_t* beg_pos_HT, vertex_t* adj_list_in
 			int temp= adj_list_HT[now];
 			int bin=temp & MODULO;
 			bin+=BIN_OFFSET;
-			int index=atomicAdd(&bin_count[bin],1);
-			// index=4;
-			if (index<shared_BUCKET_SIZE)
+			int index;
+			for(;;)
 			{
-				shared_partition[index*blockDim.x+ bin]=temp;
+				index=atomicAdd(&bin_count[bin],1);
+				if (index<shared_BUCKET_SIZE)
+				{
+					shared_partition[index*blockDim.x+ bin]=temp;
+					break;
+				}
+				else if (index<BUCKET_SIZE)
+				{
+					index=index-shared_BUCKET_SIZE;
+					partition[index*blockDim.x+ bin + BIN_START]=temp;
+					break;
+				}
+				break;
+				index=atomicAdd(&bin_count[bin],-1);
+				bin++;
+				if (bin-BIN_OFFSET==32) bin=BIN_OFFSET;
 			}
-			else
-			{
-				index=index-shared_BUCKET_SIZE;
-				partition[index*blockDim.x+ bin + BIN_START]=temp;
-
-				// if (vertex==warpfirstvertex+32768*2-1)
-				// 	printf("%d %d %d %d %d\n",temp,bin,index,BIN_START,index*blockDim.x+ bin + BIN_START);
-			}			now+=WARPSIZE;
+			now+=WARPSIZE;
 		}
 		__syncwarp();
 		
