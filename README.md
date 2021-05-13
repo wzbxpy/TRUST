@@ -1,16 +1,13 @@
 # TRUST
 This is the code for TRUST: Triangle Counting Reloaded on GPUs.
 
-//## download
-//You can download the Zip file from 
 
-//    https://www.dropbox.com/s/g2onpn0nstddc8e/TRUST.zip?dl=0
 ## Organization
 The code of TRUST has two version: without graph partition for small graph and without graph partition for large graph. Preprocess include the code for preprocessing. Following the step to test the TRUST.
 
 ## Environment 
-CUDA Toolkit 10.2
-g++ 7.4.0
+CUDA Toolkit 10.2;
+g++ 7.4.0;
 MPICH-3.3
 
 ## Prerpocess
