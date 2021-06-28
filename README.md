@@ -96,3 +96,16 @@ The output arguments is
 4. triangle counts
 5. min times
 6. max times
+
+## reference
+
+@article{pandey2021trust,
+  title={TRUST: Triangle Counting Reloaded on GPUs},
+  author={Pandey, Santosh and Wang, Zhibin and Zhong, Sheng and Tian, Chen and Zheng, Bolong and Li, Xiaoye and Li, Lingda and Hoisie, Adolfy and Ding, Caiwen and Li, Dong and others},
+  journal={IEEE Transactions on Parallel and Distributed Systems},
+  volume={32},
+  number={11},
+  pages={2646--2660},
+  year={2021},
+  publisher={IEEE}
+}
