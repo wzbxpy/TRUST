@@ -35,7 +35,7 @@ In folder `Dataset/Cit-Patents/` we give a example of download Cit-Patents graph
 Run it by
 
     $ cd Dataset/Cit-Patents/
-    $ ./get&preprocess.sh
+    $ ./get+preprocess.sh
 
 For the large graph and input file only include edge list, we recommend use preprocess code in `Preprocess/speedupIO`.
 
@@ -46,6 +46,8 @@ For partition, run
 There are one input arguments `n`, it represent the partition number, we will partition graph into `n*n` pieces
 
 ## Compile and Run code
+**Before compile the code, you should modify the `Makefile` to match your architecture.**
+**The current settings, `--gpu-architecture=compute_70 --gpu-code=sm_70`, are tailored for the V100 environment used in the paper.**
 For small graph, we don't partition the graph. 
 Compile the code:
 
